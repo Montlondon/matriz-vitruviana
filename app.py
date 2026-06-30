@@ -7,33 +7,26 @@ import json
 # Configuração Firebase
 if not firebase_admin._apps:
     try:
-        # Pega a string do Secrets
-        secret_json = st.secrets["FIREBASE_CREDENTIALS"]
-        config_dict = json.loads(secret_json)
+        # A MUDANÇA: Carregamos o segredo como um dicionário diretamente
+        # O Streamlit já faz o parse automático do JSON se você colocar a estrutura correta
+        key_dict = st.secrets["FIREBASE_CREDENTIALS"]
         
-        # CORREÇÃO: Força a substituição de quebras de linha literais por quebras reais
-        pk = config_dict["private_key"]
-        pk = pk.replace("\\n", "\n")
-        config_dict["private_key"] = pk
+        # O truque: garante que a chave privada seja processada com quebras reais
+        # Se você colou o JSON como uma string, convertemos agora:
+        if isinstance(key_dict, str):
+            key_dict = json.loads(key_dict)
             
-        cred = credentials.Certificate(config_dict)
+        cred = credentials.Certificate(key_dict)
         firebase_admin.initialize_app(cred)
-        st.success("Firebase inicializado com sucesso!")
+        st.success("Firebase conectado!")
     except Exception as e:
-        st.error(f"Erro na inicialização do Firebase: {e}")
+        st.error(f"Erro no Firebase: {e}")
 
 # Inicializa o Firestore
-try:
-    db = firestore.client()
-except Exception as e:
-    st.error(f"Erro ao conectar no Firestore: {e}")
+db = firestore.client()
 
 # Configuração do Gemini
-try:
-    genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    st.success("Gemini configurado!")
-except Exception as e:
-    st.error(f"Erro no Gemini: {e}")
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
 st.title("Matriz Vitruviana")
-st.write("Sistema carregado.")
+st.success("Sistema carregado com sucesso.")
