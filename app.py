@@ -7,23 +7,24 @@ import json
 # Configuração Firebase
 if not firebase_admin._apps:
     try:
+        # Pega a string do Secrets
         secret_json = st.secrets["FIREBASE_CREDENTIALS"]
         config_dict = json.loads(secret_json)
         
-        # Corrige a quebra de linha forçadamente
-        if "private_key" in config_dict:
-            # Substitui a representação literal de nova linha por caracteres de quebra reais
-            config_dict["private_key"] = config_dict["private_key"].replace("\\n", "\n")
+        # CORREÇÃO: Força a substituição de quebras de linha literais por quebras reais
+        pk = config_dict["private_key"]
+        pk = pk.replace("\\n", "\n")
+        config_dict["private_key"] = pk
             
         cred = credentials.Certificate(config_dict)
         firebase_admin.initialize_app(cred)
+        st.success("Firebase inicializado com sucesso!")
     except Exception as e:
-        st.error(f"Erro ao inicializar Firebase: {e}")
+        st.error(f"Erro na inicialização do Firebase: {e}")
 
-# Inicializa o Firestore com verificação
+# Inicializa o Firestore
 try:
-    if firebase_admin._apps:
-        db = firestore.client()
+    db = firestore.client()
 except Exception as e:
     st.error(f"Erro ao conectar no Firestore: {e}")
 
@@ -35,4 +36,4 @@ except Exception as e:
     st.error(f"Erro no Gemini: {e}")
 
 st.title("Matriz Vitruviana")
-st.success("Sistema carregado com sucesso.")
+st.write("Sistema carregado.")
