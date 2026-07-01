@@ -2,13 +2,15 @@ import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
 import base64
+import google.generativeai as genai
 
+# 1. Configuração do Firebase
 if not firebase_admin._apps:
-    # Decodifica e garante que a chave seja uma string limpa
+    # Decodifica a chave que está em Base64 e remove espaços em branco extras
     raw_key = base64.b64decode(st.secrets["FIREBASE_PRIVATE_KEY_BASE64"]).decode('utf-8').strip()
     
-    # Criamos o certificado diretamente, sem transformar em dicionário intermediário que pode corromper
-    cert = credentials.Certificate({
+    # Monta o dicionário de credenciais
+    cred_dict = {
         "type": st.secrets["FIREBASE_TYPE"],
         "project_id": st.secrets["FIREBASE_PROJECT_ID"],
         "private_key_id": st.secrets["FIREBASE_PRIVATE_KEY_ID"],
@@ -19,8 +21,16 @@ if not firebase_admin._apps:
         "token_uri": st.secrets["FIREBASE_TOKEN_URI"],
         "auth_provider_x509_cert_url": st.secrets["FIREBASE_AUTH_PROVIDER_X509_CERT_URL"],
         "client_x509_cert_url": st.secrets["FIREBASE_CLIENT_X509_CERT_URL"]
-    })
+    }
     
+    # Inicializa o app
+    cert = credentials.Certificate(cred_dict)
     firebase_admin.initialize_app(cert)
 
-# ... resto do seu código
+# 2. Inicialização do Firestore e Gemini
+db = firestore.client()
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+
+# 3. Interface do App
+st.title("Matriz Vitruviana")
+st.success("Sistema conectado e operante!")
