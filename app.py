@@ -1,36 +1,35 @@
 import streamlit as st
 import firebase_admin
 from firebase_admin import credentials, firestore
-import json
-import os
+import google.generativeai as genai
 
-# Função para inicializar o Firebase com segurança
-def initialize_firebase():
-    if not firebase_admin._apps:
-        try:
-            # Carrega o JSON dos segredos
-            secret_json = st.secrets["FIREBASE_CREDENTIALS"]
-            
-            # Se for uma string, faz o parsing para dicionário
-            if isinstance(secret_json, str):
-                cred_dict = json.loads(secret_json)
-            else:
-                cred_dict = dict(secret_json)
+# Inicialização segura do Firebase
+if not firebase_admin._apps:
+    try:
+        # Montamos o dicionário a partir de chaves individuais no Secrets
+        cred_dict = {
+            "type": st.secrets["FIREBASE_TYPE"],
+            "project_id": st.secrets["FIREBASE_PROJECT_ID"],
+            "private_key_id": st.secrets["FIREBASE_PRIVATE_KEY_ID"],
+            "private_key": st.secrets["FIREBASE_PRIVATE_KEY"].replace("\\n", "\n"),
+            "client_email": st.secrets["FIREBASE_CLIENT_EMAIL"],
+            "client_id": st.secrets["FIREBASE_CLIENT_ID"],
+            "auth_uri": st.secrets["FIREBASE_AUTH_URI"],
+            "token_uri": st.secrets["FIREBASE_TOKEN_URI"],
+            "auth_provider_x509_cert_url": st.secrets["FIREBASE_AUTH_PROVIDER_CERT_URL"],
+            "client_x509_cert_url": st.secrets["FIREBASE_CLIENT_CERT_URL"]
+        }
+        cred = credentials.Certificate(cred_dict)
+        firebase_admin.initialize_app(cred)
+        st.success("Firebase conectado!")
+    except Exception as e:
+        st.error(f"Erro no Firebase: {e}")
 
-            # --- CORREÇÃO DO ERRO INVALIDBYTE ---
-            # Forçamos a substituição do caractere literal '\n' por uma quebra de linha real
-            if "private_key" in cred_dict:
-                cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
-            
-            # Inicializa com o dicionário corrigido
-            cred = credentials.Certificate(cred_dict)
-            firebase_admin.initialize_app(cred)
-            st.success("Firebase inicializado com sucesso!")
-        except Exception as e:
-            st.error(f"Erro ao inicializar Firebase: {e}")
-
-# Executa a inicialização
-initialize_firebase()
+# Inicializa o Firestore
 db = firestore.client()
+
+# Configuração do Gemini
+genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+st.success("Gemini configurado!")
 
 st.title("Matriz Vitruviana")
