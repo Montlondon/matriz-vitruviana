@@ -4,7 +4,7 @@ from firebase_admin import credentials, firestore
 import google.generativeai as genai
 
 # Carregar credenciais de forma robusta
-try:
+try: 
     if not firebase_admin._apps:
         # Criamos o dicionário buscando apenas o que o Streamlit reconhece como segredo
         cred_dict = {
