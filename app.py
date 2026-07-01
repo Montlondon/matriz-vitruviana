@@ -1,36 +1,17 @@
 import streamlit as st
 import firebase_admin
-from firebase_admin import credentials, firestore
-import base64
-import google.generativeai as genai
+from firebase_admin import credentials
+import json
 
-# 1. Configuração do Firebase
+# Verifica se o app já foi inicializado
 if not firebase_admin._apps:
-    # Decodifica a chave que está em Base64 e remove espaços em branco extras
-    raw_key = base64.b64decode(st.secrets["FIREBASE_PRIVATE_KEY_BASE64"]).decode('utf-8').strip()
+    # Transformamos os segredos em um dicionário
+    cred_dict = dict(st.secrets["FIREBASE"])
     
-    # Monta o dicionário de credenciais
-    cred_dict = {
-        "type": st.secrets["FIREBASE_TYPE"],
-        "project_id": st.secrets["FIREBASE_PROJECT_ID"],
-        "private_key_id": st.secrets["FIREBASE_PRIVATE_KEY_ID"],
-        "private_key": raw_key,
-        "client_email": st.secrets["FIREBASE_CLIENT_EMAIL"],
-        "client_id": st.secrets["FIREBASE_CLIENT_ID"],
-        "auth_uri": st.secrets["FIREBASE_AUTH_URI"],
-        "token_uri": st.secrets["FIREBASE_TOKEN_URI"],
-        "auth_provider_x509_cert_url": st.secrets["FIREBASE_AUTH_PROVIDER_X509_CERT_URL"],
-        "client_x509_cert_url": st.secrets["FIREBASE_CLIENT_X509_CERT_URL"]
-    }
+    # O Firebase espera que a chave privada contenha quebras de linha reais
+    # O Streamlit às vezes interpreta o \n literalmente. Se der erro, tente:
+    cred_dict["private_key"] = cred_dict["private_key"].replace("\\n", "\n")
     
-    # Inicializa o app
-    cert = credentials.Certificate(cred_dict)
-    firebase_admin.initialize_app(cert)
-
-# 2. Inicialização do Firestore e Gemini
-db = firestore.client()
-genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-
-# 3. Interface do App
-st.title("Matriz Vitruviana")
-st.success("Sistema conectado e operante!")
+    # Inicializa com o dicionário, não com o nome do arquivo
+    cred = credentials.Certificate(cred_dict)
+    firebase_admin.initialize_app(cred)
